@@ -3,6 +3,7 @@
 ## Stack Tecnológico
 
 - **Node.js** — Servidor
+- **cloudinary** — Almacenamiento de imágenes
 - **Express** — Framework para crear la API
 - **TypeScript** — Lenguaje con tipos
 - **MongoDB Atlas** — Base de datos en la nube
@@ -100,6 +101,7 @@ Se envía en cada request
 Backend valida token
        ↓
 Acceso permitido o denegado
+
 ```
 
 ### Seguridad
