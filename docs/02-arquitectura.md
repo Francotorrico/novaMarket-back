@@ -36,6 +36,39 @@ Cliente (React)
 - **Models** — Estructura de datos
 - **DB** — Persistencia
 
+--- estructura de carpetas
+
+backend/
+│
+├── src/
+│   ├── config/
+│   │   └── database.js
+│   │
+│   ├── controllers/
+│   │   ├── auth.controller.js
+│   │   ├── product.controller.js
+│   │   └── order.controller.js
+│   │
+│   ├── models/
+│   │   ├── User.js
+│   │   ├── Product.js
+│   │   └── Order.js
+│   │
+│   ├── routes/
+│   │   ├── auth.routes.js
+│   │   ├── product.routes.js
+│   │   └── order.routes.js
+│   │
+│   ├── middleware/
+│   │   ├── auth.middleware.js
+│   │   └── role.middleware.js
+│   │
+│   └── server.js
+│
+├── .env
+├── package.json
+└── README.md
+
 ---
 
 ## Colecciones (Modelos)
