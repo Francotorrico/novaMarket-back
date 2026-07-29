@@ -31,6 +31,16 @@ app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 
+// Error handler
+app.use((err: any, req: Request, res: Response, next: any) => {
+  console.error("Error stack:", err.stack);
+  console.error("Error:", err);
+  res.status(err.status || err.statusCode || 500).json({
+    error: err.message || String(err),
+    status: err.status || err.statusCode
+  });
+});
+
 // Iniciar servidor
 connectDB()
   .then(() => {
