@@ -1,3 +1,137 @@
-### health check
+### 
+GET http://localhost:5000
+
+
+
+### Health check
 GET http://localhost:5000/api/health
 Accept: application/json
+
+### ========================================
+### AUTH - Register
+### ========================================
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Franco Test",
+  "email": "franco@test.com",
+  "password": "123456"
+}
+
+### ========================================
+### AUTH - Register (email existente)
+### ========================================
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Franco Test",
+  "email": "franco@test.com",
+  "password": "123456"
+}
+
+### ========================================
+### AUTH - Login
+### ========================================
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "franco@test.com",
+  "password": "123456"
+}
+
+### ========================================
+### AUTH - Login (credenciales inválidas)
+### ========================================
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "franco@test.com",
+  "password": "wrongpassword"
+}
+
+### ========================================
+### Middleware - Sin token (debería 401)
+### ========================================
+GET http://localhost:5000/api/products
+Content-Type: application/json
+
+### ========================================
+### Middleware - Token inválido (debería 403)
+### ========================================
+GET http://localhost:5000/api/products
+Authorization: Bearer token_invalido_12345
+Content-Type: application/json
+
+### ========================================
+### AUTH - Perfil del usuario (protegido)
+### ========================================
+GET http://localhost:5000/api/auth/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhNjBjNDUxYjJjZTdhYmUyZGM2MDlhNyIsInJvbGUiOiJjbGllbnQiLCJpYXQiOjE3ODQ3MjY2MTAsImV4cCI6MTc4NTMzMTQxMH0.SrTzUX4Y7zDKg6_HGHwxq0OHchbQWD0KcwtVLM6bJrY
+Content-Type: application/json
+
+### ========================================
+### AUTH - Perfil sin token (debería 401)
+### ========================================
+GET http://localhost:5000/api/auth/me
+Content-Type: application/json
+
+
+### producst
+GET http://localhost:5000/api/products
+Accept: application/json
+
+### ========================================
+### PRODUCTS - Listado de productos
+### ========================================
+GET http://localhost:5000/api/products
+Accept: application/json
+
+### ========================================
+# PRODUCTS - Listado de productos (filtrado por category)
+### ====================================
+GET http://localhost:5000/api/products?category=accesorios
+Accept: application/json
+
+### ========================================
+### PRODUCTS - Producto por ID
+### ========================================
+GET http://localhost:5000/api/products/64abc123def456789
+Accept: application/json
+
+### ========================================
+### PRODUCTS - Crear producto (solo admin)
+### ========================================
+POST http://localhost:5000/api/products
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhNjBjNDUxYjJjZTdhYmUyZGM2MDlhNyIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc4NDgxOTQ3MSwiZXhwIjoxNzg1NDI0MjcxfQ.AANg9kqXfEYxRz4QuDD1RhizQYMtY08wFL9D6-uF0EM
+# Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhNjBjNDUxYjJjZTdhYmUyZGM2MDlhNyIsInJvbGUiOiJjbGllbnQiLCJpYXQiOjE3ODQ3MjY2MTAsImV4cCI6MTc4NTMzMTQxMH0.SrTzUX4Y7zDKg6_HGHwxq0OHchbQWD0KcwtVLM6bJrY
+Content-Type: application/json
+
+{
+  "name": "Teclado mecánico",
+  "description": "Switches rojos",
+  "price": 4500,
+  "category": "periféricos",
+  "stock": 10
+}
+
+### ========================================
+### PRODUCTS - Actualizar producto (solo admin)
+### ========================================
+PUT http://localhost:5000/api/products/64abc123def456789
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhNjBjNDUxYjJjZTdhYmUyZGM2MDlhNyIsInJvbGUiOiJjbGllbnQiLCJpYXQiOjE3ODQ3MjY2MTAsImV4cCI6MTc4NTMzMTQxMH0.SrTzUX4Y7zDKg6_HGHwxq0OHchbQWD0KcwtVLM6bJrY
+Content-Type: application/json
+
+{
+  "price": 5000,
+  "stock": 5
+}
+
+### ========================================
+### PRODUCTS - Eliminar producto (solo admin)
+### ========================================
+DELETE http://localhost:5000/api/products/64abc123def456789
+Authorization: Bearer <token_admin>
