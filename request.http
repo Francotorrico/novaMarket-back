@@ -135,3 +135,51 @@ Content-Type: application/json
 ### ========================================
 DELETE http://localhost:5000/api/products/64abc123def456789
 Authorization: Bearer <token_admin>
+
+### ========================================
+### ORDERS
+### ========================================
+
+### ========================================
+### ORDERS - Crear pedido (requiere auth)
+### Reemplaza <TOKEN_CLIENT> y <PRODUCT_ID> por los reales
+### ========================================
+POST http://localhost:5000/api/orders
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhNjBjNDUxYjJjZTdhYmUyZGM2MDlhNyIsInJvbGUiOiJjbGllbnQiLCJpYXQiOjE3ODU3Nzc3ODgsImV4cCI6MTc4NjM4MjU4OH0.jUcHPLbr1cjwH730nvZnMHQdcKqoKbMnw_UnBMZGyHM
+Content-Type: application/json
+
+{
+  "items": [
+    { "productId": "6a622637fe8584b5f89e9a71", "quantity": 2 }
+  ],
+  "shippingAddress": "Av. Siempre Viva 123, CABA"
+}
+
+### ========================================
+### ORDERS - Mis pedidos (requiere auth)
+### ========================================
+GET http://localhost:5000/api/orders/my
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhNjBjNDUxYjJjZTdhYmUyZGM2MDlhNyIsInJvbGUiOiJjbGllbnQiLCJpYXQiOjE3ODU3Nzc3ODgsImV4cCI6MTc4NjM4MjU4OH0.jUcHPLbr1cjwH730nvZnMHQdcKqoKbMnw_UnBMZGyHM
+
+### ========================================
+### ORDERS - Todos los pedidos (solo admin)
+### ========================================
+GET http://localhost:5000/api/orders
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhNzBjZGYxNGEwZDQ0Zjc0NGFjMDkxNSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc4NTc3ODEwMiwiZXhwIjoxNzg2MzgyOTAyfQ.UA_YqzB1958YrSA8jbaD7hVgVoRnjT8O5TUL_WvnhdI
+
+### ========================================
+### ORDERS - Actualizar status (solo admin)
+### status: pending | paid | shipped | delivered | cancelled
+### ========================================
+PUT http://localhost:5000/api/orders/<ORDER_ID>/status
+Authorization: Bearer <TOKEN_ADMIN>
+Content-Type: application/json
+
+{
+  "status": "shipped"
+}
+
+### ========================================
+### ORDERS - Sin token (debería 401)
+### ========================================
+GET http://localhost:5000/api/orders/my
