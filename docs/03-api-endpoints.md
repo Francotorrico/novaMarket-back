@@ -1,16 +1,40 @@
 # API Documentation
 
+API REST de NovaMarket. Formato de respuestas, autenticación y endpoints reales.
+
+---
+
+## Autenticación
+
+Las rutas marcadas como **protegidas** requieren el header:
+
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
+Comportamiento del middleware `auth`:
+
+| Situación | Código | Respuesta |
+|-----------|--------|-----------|
+| Sin header `Authorization` | 401 | `{ "error": "No se proporcionó token de autenticación" }` |
+| Formato distinto de `Bearer <token>` | 401 | `{ "error": "Formato de token inválido" }` |
+| Token inválido o expirado | 403 | `{ "error": "Token inválido o expirado" }` |
+
+Las rutas de **admin** agregan el middleware `role`. Si el usuario no es admin responden **403** `{ "error": "No tienes permisos para esta acción" }`.
+
+El token JWT vence a los **7 días** y contiene `id` y `role` del usuario.
+
+Roles: `client` (por defecto al registrarse) y `admin`.
+
 ---
 
 ## Auth
 
 ### POST /api/auth/register
 
-Registrar un nuevo usuario.
+Registrar un nuevo usuario. **Pública**.
 
-**Parámetros:** Ninguno
-
-**Body esperado:**
+**Body:**
 ```json
 {
   "name": "Juan Perez",
@@ -22,23 +46,28 @@ Registrar un nuevo usuario.
 **Respuesta exitosa (201):**
 ```json
 {
-  "success": true,
-  "message": "Usuario creado correctamente"
+  "token": "jwt_token",
+  "user": {
+    "_id": "64abc123def456789",
+    "name": "Juan Perez",
+    "email": "juan@email.com",
+    "role": "client",
+    "createdAt": "2026-07-13T10:30:00.000Z"
+  }
 }
 ```
 
 **Errores posibles:**
-- 400: Error al crear el usuario (email duplicado, datos inválidos)
+- 400: `{ "error": "El usuario ya existe" }`
+- 500: `{ "error": "Error de servidor" }`
 
 ---
 
 ### POST /api/auth/login
 
-Iniciar sesión y obtener token JWT.
+Iniciar sesión y obtener el token JWT. **Pública**.
 
-**Parámetros:** Ninguno
-
-**Body esperado:**
+**Body:**
 ```json
 {
   "email": "juan@email.com",
@@ -46,53 +75,34 @@ Iniciar sesión y obtener token JWT.
 }
 ```
 
-**Respuesta exitosa (200):**
-```json
-{
-  "success": true,
-  "message": "Login exitoso",
-  "data": {
-    "token": "jwt_token",
-    "user": {
-      "id": "123",
-      "name": "Juan Perez",
-      "role": "customer"
-    }
-  }
-}
-```
+**Respuesta exitosa (200):** mismo shape que `register` (`{ token, user }`).
 
 **Errores posibles:**
-- 401: Credenciales inválidas
-- 400: Datos incompletos
+- 401: `{ "error": "Credenciales inválidas" }`
+- 500: `{ "error": "Error de servidor" }`
 
 ---
 
-### GET /api/auth/profile
+### GET /api/auth/me
 
-Obtener perfil del usuario autenticado.
-
-**Ruta protegida** - Requiere: `Authorization: Bearer <JWT_TOKEN>`
-
-**Parámetros:** Ninguno
-
-**Body esperado:** Ninguno
+Perfil del usuario autenticado. **Protegida**.
 
 **Respuesta exitosa (200):**
 ```json
 {
-  "success": true,
-  "data": {
-    "id": "123",
+  "user": {
+    "_id": "64abc123def456789",
     "name": "Juan Perez",
     "email": "juan@email.com",
-    "role": "customer"
+    "role": "client",
+    "createdAt": "2026-07-13T10:30:00.000Z",
+    "updatedAt": "2026-07-13T10:30:00.000Z",
+    "__v": 0
   }
 }
 ```
 
-**Errores posibles:**
-- 401: Token no válido o expirado
+**Errores posibles:** 401/403 (tabla de autenticación), 404 `Usuario no encontrado`.
 
 ---
 
@@ -100,179 +110,101 @@ Obtener perfil del usuario autenticado.
 
 ### GET /api/products
 
-Listar todos los productos con filtros opcionales.
+Listar productos activos. **Pública**.
 
-**Pública** - No requiere autenticación
-
-**Parámetros Query (opcionales):**
+**Query opcional:**
 | Parámetro | Tipo | Descripción |
 |-----------|------|-------------|
-| category | string | Filtrar por categoría |
-| minPrice | number | Precio mínimo |
-| maxPrice | number | Precio máximo |
-| search | string | Buscar por nombre |
+| `category` | string | Filtrar por categoría (`accesorios`, `periféricos`, `gadgets`) |
 
-**Body esperado:** Ninguno
-
-**Respuesta exitosa (200):**
+**Respuesta exitosa (200):** array de productos activos
 ```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "123",
-      "name": "Mouse Logitech",
-      "description": "Mouse inalámbrico",
-      "price": 25000,
-      "stock": 10,
-      "imageUrl": "https://...",
-      "category": "mouse"
-    }
-  ]
-}
+[
+  {
+    "_id": "64abc123def456789",
+    "name": "Teclado mecánico",
+    "description": "Switches rojos",
+    "price": 4500,
+    "category": "periféricos",
+    "imageUrl": "https://...",
+    "stock": 10,
+    "active": true,
+    "createdAt": "2026-07-13T10:30:00.000Z",
+    "updatedAt": "2026-07-13T10:30:00.000Z",
+    "__v": 0
+  }
+]
 ```
 
 **Errores posibles:**
-- 500: Error interno del servidor
+- 500: `{ "error": "Error al obtener productos: <detalle>" }`
 
 ---
 
 ### GET /api/products/:id
 
-Obtener producto por ID.
-
-**Pública** - No requiere autenticación
-
-**Parámetros:**
-| Parámetro | Tipo | Descripción |
-|-----------|------|-------------|
-| id | string | ID del producto |
-
-**Body esperado:** Ninguno
-
-**Respuesta exitosa (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "123",
-    "name": "Mouse Logitech",
-    "description": "Mouse inalámbrico",
-    "price": 25000,
-    "stock": 10,
-    "imageUrl": "https://...",
-    "category": "mouse"
-  }
-}
-```
+Obtener producto por ID. **Pública**.
 
 **Errores posibles:**
-- 404: Producto no encontrado
+- 400: `{ "error": "ID de producto inválido" }` (ID con formato inválido)
+- 404: `{ "error": "Producto no encontrado" }` (ID válido inexistente)
+- 500: `{ "error": "Error al obtener el producto" }`
 
 ---
 
 ### POST /api/products
 
-Crear un nuevo producto.
+Crear un producto. **Admin**.
 
-**Ruta protegida** - Requiere: `Authorization: Bearer <JWT_TOKEN>`
+Acepta JSON o `multipart/form-data` (con imagen en el campo `image`, subida a Cloudinary). La URL de imagen también puede pasarse como `imageUrl`.
 
-**Parámetros:** Ninguno
-
-**Body esperado:**
+**Body (JSON):**
 ```json
 {
   "name": "Teclado mecánico",
-  "description": "RGB",
-  "price": 50000,
-  "category": "teclado",
-  "stock": 20,
-  "imageUrl": "https://..."
+  "description": "Switches rojos",
+  "price": 4500,
+  "category": "periféricos",
+  "stock": 10
 }
 ```
 
-**Respuesta exitosa (201):**
-```json
-{
-  "success": true,
-  "message": "Producto creado correctamente",
-  "data": {
-    "id": "123"
-  }
-}
-```
+**Validaciones (400):**
+- `name`: obligatorio, string no vacío.
+- `price`: obligatorio, número mayor a 0.
+- `category`: obligatorio, uno de `accesorios | periféricos | gadgets`.
+- `stock`: obligatorio, entero mayor o igual a 0.
 
-**Errores posibles:**
-- 400: Datos inválidos o incompletos
-- 401: No autenticado
-- 403: No tiene permisos de admin
+**Respuesta exitosa (201):** producto creado (mismo shape que GET `:id`).
 
 ---
 
 ### PUT /api/products/:id
 
-Actualizar un producto existente.
+Actualizar un producto (parcial: solo se validan los campos enviados). **Admin**.
 
-**Ruta protegida** - Requiere: `Authorization: Bearer <JWT_TOKEN>`
-
-**Parámetros:**
-| Parámetro | Tipo | Descripción |
-|-----------|------|-------------|
-| id | string | ID del producto |
-
-**Body esperado:**
-```json
-{
-  "name": "Teclado mecánico",
-  "description": "RGB",
-  "price": 45000,
-  "stock": 15,
-  "imageUrl": "https://...",
-  "category": "teclado"
-}
-```
-
-**Respuesta exitosa (200):**
-```json
-{
-  "success": true,
-  "message": "Producto actualizado correctamente"
-}
-```
+Si se envía una imagen nueva, la anterior se elimina de Cloudinary.
 
 **Errores posibles:**
-- 400: Datos inválidos
-- 401: No autenticado
-- 403: No tiene permisos de admin
-- 404: Producto no encontrado
+- 400: `{ "error": "ID de producto inválido" }` o mensaje de validación de campo
+- 404: `{ "error": "Producto no encontrado" }`
+- 500: `{ "error": "Error al actualizar el producto" }`
 
 ---
 
 ### DELETE /api/products/:id
 
-Eliminar un producto.
-
-**Ruta protegida** - Requiere: `Authorization: Bearer <JWT_TOKEN>`
-
-**Parámetros:**
-| Parámetro | Tipo | Descripción |
-|-----------|------|-------------|
-| id | string | ID del producto |
-
-**Body esperado:** Ninguno
+Eliminación lógica: marca `active: false`. **Admin**.
 
 **Respuesta exitosa (200):**
 ```json
 {
-  "success": true,
-  "message": "Producto eliminado correctamente"
+  "message": "Producto eliminado",
+  "product": { "...producto con active: false" }
 }
 ```
 
-**Errores posibles:**
-- 401: No autenticado
-- 403: No tiene permisos de admin
-- 404: Producto no encontrado
+**Errores posibles:** 400 (ID inválido), 404 (no encontrado), 500.
 
 ---
 
@@ -280,174 +212,102 @@ Eliminar un producto.
 
 ### POST /api/orders
 
-Crear un nuevo pedido después del checkout.
+Crear un pedido tras el checkout. **Protegida**.
 
-**Ruta protegida** - Requiere: `Authorization: Bearer <JWT_TOKEN>`
-
-**Parámetros:** Ninguno
-
-**Body esperado:**
+**Body:**
 ```json
 {
   "items": [
-    {
-      "productId": "123",
-      "quantity": 2,
-    //   "price": 25000
-    }
+    { "productId": "64abc123def456789", "quantity": 2 }
   ],
-  "totalAmount": 50000
+  "shippingAddress": "Av. Siempre Viva 123, CABA"
 }
 ```
+
+Comportamiento:
+- Valida que `items` no esté vacío y que `shippingAddress` exista.
+- Por cada item: valida `quantity` (entero > 0), que el producto exista y que haya stock. Descuenta el stock y guarda el producto.
+- El precio se toma del producto en el momento de la compra (no del frontend). El `total` se calcula en el backend.
 
 **Respuesta exitosa (201):**
 ```json
 {
-  "success": true,
-  "message": "Pedido creado exitosamente",
-  "data": {
-    "_id": "abc123",
-    "paymentStatus": "pending",
-    "orderStatus": "pending",
-    "totalAmount": 50000
-  }
+  "_id": "64abc123def456789",
+  "user": "64abc123def456789",
+  "items": [
+    {
+      "product": "64abc123def456789",
+      "quantity": 2,
+      "price": 4500,
+      "_id": "64abc123def456789"
+    }
+  ],
+  "total": 9000,
+  "shippingAddress": "Av. Siempre Viva 123, CABA",
+  "status": "pending",
+  "createdAt": "2026-07-13T10:30:00.000Z",
+  "updatedAt": "2026-07-13T10:30:00.000Z",
+  "__v": 0
 }
 ```
 
 **Errores posibles:**
-- 400: Datos inválidos o productos no disponibles
-- 401: No autenticado
+- 400: `{ "error": "El pedido debe incluir items" }` | `{ "error": "La dirección de envío es obligatoria" }` | `{ "error": "La cantidad para el producto debe ser un número entero mayor a 0" }` | `{ "error": "Stock insuficiente para <producto>" }`
+- 404: `{ "error": "Producto no encontrado" }`
+- 500: `{ "error": "<mensaje>" }`
+
+---
+
+### GET /api/orders/my
+
+Pedidos del usuario autenticado. **Protegida**.
+
+**Respuesta exitosa (200):** array de pedidos del usuario, con `items.product` populado (`name`, `price`).
 
 ---
 
 ### GET /api/orders
 
-Listar todos los pedidos (solo admin).
+Todos los pedidos. **Admin**.
 
-**Ruta protegida** - Requiere: `Authorization: Bearer <JWT_TOKEN>`
-
-**Permisos:** Usuario con rol admin
-
-**Parámetros:** Ninguno
-
-**Body esperado:** Ninguno
-
-**Respuesta exitosa (200):**
-```json
-{
-  "success": true,
-  "message": "Pedidos obtenidos correctamente",
-  "data": [
-    {
-      "_id": "001",
-      "user": {
-        "_id": "123",
-        "name": "Juan Perez",
-        "email": "juan@email.com"
-      },
-      "items": [
-        {
-          "productId": "p001",
-          "name": "Mouse Logitech",
-          "quantity": 2,
-          "price": 25000
-        }
-      ],
-      "totalAmount": 50000,
-      "paymentStatus": "approved",
-      "orderStatus": "processing",
-      "createdAt": "2026-07-13T10:30:00Z"
-    }
-  ]
-}
-```
-
-**Errores posibles:**
-- 401: No autenticado
-- 403: No tiene permisos de admin
+**Respuesta exitosa (200):** array de pedidos, con `user` populado (`name`, `email`) y `items.product` populado (`name`).
 
 ---
 
-### GET /api/orders/user/:userId
+### PUT /api/orders/:id/status
 
-Obtener pedidos de un usuario específico.
+Actualizar el estado de un pedido. **Admin**.
 
-**Ruta protegida** - Requiere: `Authorization: Bearer <JWT_TOKEN>`
-
-**Parámetros:**
-| Parámetro | Tipo | Descripción |
-|-----------|------|-------------|
-| userId | string | ID del usuario |
-
-**Body esperado:** Ninguno
-
-**Respuesta exitosa (200):**
+**Body:**
 ```json
 {
-  "success": true,
-  "data": [
-    {
-      "_id": "001",
-      "items": [
-        {
-          "productId": "123",
-          "name": "Mouse Logitech",
-          "quantity": 2,
-          "price": 25000
-        }
-      ],
-      "totalAmount": 50000,
-      "paymentStatus": "pending",
-      "orderStatus": "pending",
-      "createdAt": "2026-07-13T10:30:00Z"
-    }
-  ]
+  "status": "shipped"
 }
 ```
 
+**Estados válidos:** `pending | paid | shipped | delivered | cancelled`
+
 **Errores posibles:**
-- 401: No autenticado
-- 403: No puedes ver pedidos de otro usuario
-- 404: Usuario no encontrado
+- 400: `{ "error": "ID de pedido inválido" }` o `{ "error": "Estado inválido: <status>. Valores válidos: ..." }`
+- 404: `{ "error": "Pedido no encontrado" }`
 
 ---
 
-## Carrito (Opcional)
+## Formato general de errores
 
-Para el MVP se puede manejar el carrito en frontend y enviar solamente la información al backend al confirmar compra.
+Todos los errores usan la clave unificada:
 
-### GET /api/cart
-
-Obtener carrito del usuario.
-
-**Ruta protegida** - Requiere: `Authorization: Bearer <JWT_TOKEN>`
-
-### POST /api/cart
-
-Agregar producto al carrito.
-
-**Ruta protegida** - Requiere: `Authorization: Bearer <JWT_TOKEN>`
-
-**Body esperado:**
 ```json
-{
-  "items": [
-    {
-      "productId": "123",
-      "quantity": 2
-    }
-  ]
-}
+{ "error": "mensaje" }
 ```
 
-### PUT /api/cart/:productId
+con el código HTTP correspondiente (400, 401, 403, 404, 500).
 
-Actualizar cantidad de un producto en el carrito.
+## Rutas inexistentes
 
-**Ruta protegida** - Requiere: `Authorization: Bearer <JWT_TOKEN>`
+Cualquier ruta no definida responde `404` con JSON:
+`{ "error": "Ruta no encontrada: GET /api/noexiste" }`
 
-### DELETE /api/cart/:productId
+## Carrito
 
-Eliminar producto del carrito.
-
-**Ruta protegida** - Requiere: `Authorization: Bearer <JWT_TOKEN>`
+No hay endpoints de carrito en el backend. El carrito se maneja en el frontend y con el checkout se envía `POST /api/orders`.

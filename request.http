@@ -38,7 +38,7 @@ POST http://localhost:5000/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "franco@test.com",
+  "email": "franco@admin.com",
   "password": "123456"
 }
 
@@ -104,11 +104,10 @@ GET http://localhost:5000/api/products/64abc123def456789
 Accept: application/json
 
 ### ========================================
-### PRODUCTS - Crear producto (solo admin)
+### PRODUCTS - Crear producto SIN imagen (solo admin)
 ### ========================================
 POST http://localhost:5000/api/products
 Authorization: Bearer <TOKEN_ADMIN>
-# Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhNjBjNDUxYjJjZTdhYmUyZGM2MDlhNyIsInJvbGUiOiJjbGllbnQiLCJpYXQiOjE3ODQ3MjY2MTAsImV4cCI6MTc4NTMzMTQxMH0.SrTzUX4Y7zDKg6_HGHwxq0OHchbQWD0KcwtVLM6bJrY
 Content-Type: application/json
 
 {
@@ -120,7 +119,43 @@ Content-Type: application/json
 }
 
 ### ========================================
-### PRODUCTS - Actualizar producto (solo admin)
+### PRODUCTS - Crear producto CON imagen (solo admin)
+### Envía los campos como form-data y la imagen en el campo "image"
+### En VS Code (REST Client) usá el bloque "file" apuntando a la imagen
+### ========================================
+POST http://localhost:5000/api/products
+Authorization: Bearer <TOKEN_ADMIN>
+Content-Type: multipart/form-data; boundary=----FormBoundary
+
+------FormBoundary
+Content-Disposition: form-data; name="name"
+
+Mouse gamer RGB
+------FormBoundary
+Content-Disposition: form-data; name="description"
+
+Sensor óptico 16000 DPI
+------FormBoundary
+Content-Disposition: form-data; name="price"
+
+3500
+------FormBoundary
+Content-Disposition: form-data; name="category"
+
+periféricos
+------FormBoundary
+Content-Disposition: form-data; name="stock"
+
+15
+------FormBoundary
+Content-Disposition: form-data; name="image"; filename="mouse.png"
+Content-Type: image/png
+
+< ./assets/mouse.png
+------FormBoundary--
+
+### ========================================
+### PRODUCTS - Actualizar producto SIN imagen (solo admin)
 ### ========================================
 PUT http://localhost:5000/api/products/64abc123def456789
 Authorization: Bearer <TOKEN_ADMIN>
@@ -130,6 +165,29 @@ Content-Type: application/json
   "price": 5000,
   "stock": 5
 }
+
+### ========================================
+### PRODUCTS - Actualizar producto CON imagen nueva (solo admin)
+### Si se envía una imagen nueva, la anterior se borra de Cloudinary
+### ========================================
+PUT http://localhost:5000/api/products/64abc123def456789
+Authorization: Bearer <TOKEN_ADMIN>
+Content-Type: multipart/form-data; boundary=----FormBoundary
+
+------FormBoundary
+Content-Disposition: form-data; name="price"
+
+5000
+------FormBoundary
+Content-Disposition: form-data; name="stock"
+
+8
+------FormBoundary
+Content-Disposition: form-data; name="image"; filename="mouse-v2.png"
+Content-Type: image/png
+
+< ./assets/mouse.png
+------FormBoundary--
 
 ### ========================================
 ### PRODUCTS - Eliminar producto (solo admin)
