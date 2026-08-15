@@ -55,32 +55,3 @@ userSchema.methods.comparePassword = async function(password: string) {
 
 // Traducción: "Crea el modelo con este schema, y cuando TypeScript lo use, trátalo como IUser"
 export default mongoose.model<IUser>("User", userSchema);
-/*
----
-En resumen:
-
-┌──────────────┬─────────────────────────────────────────────┐
-│    Parte     │                  Qué hace                   │
-├──────────────┼─────────────────────────────────────────────┤
-│ Schema       │ Crea la estructura en MongoDB (campos,      │
-│              │ métodos reales)                             │
-├──────────────┼─────────────────────────────────────────────┤
-│ Interface    │ Le dice a TypeScript qué campos/métodos     │
-│              │ existen (para autocompletado y errores)     │
-├──────────────┼─────────────────────────────────────────────┤
-│ model<IUser> │ Une ambos: usa el schema real, pero con el  │
-│              │ tipo de TypeScript                          │
-└──────────────┴─────────────────────────────────────────────┘
-
-Es como el esquema de una receta:
-- Schema = Los ingredientes y pasos reales para hacer la comida
-- Interface = La foto del plato terminado (solo para ver cómo debería verse)
-- model<IUser> = "Usa esta receta, y cuando hables de ella, referencia esta foto"
-
-✻ Brewed for 11s
-
-──────────────────────────────────────────────────────────────────
-❯
-──────────────────────────────────────────────────────────────────
-  ⏸ manual mode on · ? for sho
-*/
