@@ -12,10 +12,15 @@ const app: Express = express();
 const port = process.env.PORT || 5000;
 
 // Middlewares
+// FRONTEND_URL acepta una lista separada por comas: https://a.com,https://b.com
+const allowedOrigins = (process.env.FRONTEND_URL || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    const allowedOrigins = [process.env.FRONTEND_URL];
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || !allowedOrigins.length || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error(`Origen no permitido por CORS: ${origin}`));
