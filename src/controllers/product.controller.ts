@@ -11,6 +11,20 @@ const VALID_CATEGORIES = ["accesorios", "periféricos", "gadgets"];
 
 const REQUIRED_CREATE_FIELDS = ["name", "price", "category", "stock"] as const;
 
+const normalizeProductFields = (body: Record<string, unknown>) => {
+  const fields = { ...body };
+
+  if (fields.price !== undefined && fields.price !== "") {
+    const price = Number(fields.price);
+    if (Number.isFinite(price)) fields.price = price;
+  }
+  if (fields.stock !== undefined && fields.stock !== "") {
+    const stock = Number(fields.stock);
+    if (Number.isInteger(stock)) fields.stock = stock;
+  }
+  return fields;
+};
+
 const validateProductFields = (fields: {
   name?: unknown;
   price?: unknown;
@@ -20,17 +34,20 @@ const validateProductFields = (fields: {
   if (fields.name !== undefined && (typeof fields.name !== "string" || !fields.name.trim())) {
     return "El nombre es obligatorio";
   }
-  if (fields.price !== undefined && (typeof fields.price !== "number" || fields.price <= 0)) {
-    return "El precio debe ser un número mayor a 0";
+  if (fields.price !== undefined && fields.price !== "") {
+    const price = typeof fields.price === "number" ? fields.price : Number(fields.price);
+    if (!Number.isFinite(price) || price <= 0) {
+      return "El precio debe ser un número mayor a 0";
+    }
   }
   if (fields.category !== undefined && !VALID_CATEGORIES.includes(fields.category as string)) {
     return `La categoría debe ser una de: ${VALID_CATEGORIES.join(", ")}`;
   }
-  if (
-    fields.stock !== undefined &&
-    (typeof fields.stock !== "number" || !Number.isInteger(fields.stock) || fields.stock < 0)
-  ) {
-    return "El stock debe ser un número entero mayor o igual a 0";
+  if (fields.stock !== undefined && fields.stock !== "") {
+    const stock = typeof fields.stock === "number" ? fields.stock : Number(fields.stock);
+    if (!Number.isInteger(stock) || stock < 0) {
+      return "El stock debe ser un número entero mayor o igual a 0";
+    }
   }
   return null;
 };
@@ -76,7 +93,10 @@ export const getProductById = async (req: Request, res: Response) => {
 
 export const createProduct = async (req: MulterRequest, res: Response) => {
   try {
-    const { name, description, price, category, stock } = req.body;
+    const { name, description, category } = req.body;
+    const normalized = normalizeProductFields(req.body);
+    const { price, stock } = normalized;
+    console.log("[createProduct] BODY:", req.body);
 
     const missingField = REQUIRED_CREATE_FIELDS.find(
       (field) => req.body[field] === undefined
@@ -121,11 +141,17 @@ export const updateProduct = async (req: MulterRequest, res: Response) => {
       return;
     }
 
+    const filteredBody = Object.fromEntries(
+      Object.entries(req.body ?? {}).filter(([, value]) => value !== "")
+    );
+    const normalized = normalizeProductFields(filteredBody);
+    console.log("[updateProduct] BODY:", req.body);
+
     const validationError = validateProductFields({
-      name: req.body.name,
-      price: req.body.price,
-      category: req.body.category,
-      stock: req.body.stock,
+      name: normalized.name,
+      price: normalized.price,
+      category: normalized.category,
+      stock: normalized.stock,
     });
     if (validationError) {
       res.status(400).json({ error: validationError });
@@ -139,7 +165,7 @@ export const updateProduct = async (req: MulterRequest, res: Response) => {
       return;
     }
 
-    const updateData = { ...req.body };
+    const updateData = { ...normalized };
 
     if (req.file) {
       if (existingProduct.imageUrl) {
