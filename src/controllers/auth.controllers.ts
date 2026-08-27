@@ -10,9 +10,16 @@ export const generateToken = (id: string, role: string) => {
     return token;
 };
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.com$/;
+
 export const register = async (req: Request, res: Response) => {
     try {
         const { name, email, password } = req.body;
+
+        // Validar formato de email
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ error: "Email inválido. Debe terminar en @ y .com" });
+        }
 
         // Validar que el email no exista
         const exists = await User.findOne({ email });
