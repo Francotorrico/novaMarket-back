@@ -13,13 +13,16 @@ const port = process.env.PORT || 5000;
 
 // Middlewares
 // FRONTEND_URL acepta una lista separada por comas: https://a.com,https://b.com
-const allowedOrigins = (process.env.FRONTEND_URL || "")
+const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
 const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+  origin: (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void,
+  ) => {
     if (!origin || !allowedOrigins.length || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -48,7 +51,9 @@ app.use("/api/orders", orderRoutes);
 
 // Ruta no encontrada
 app.use((req: Request, res: Response) => {
-  res.status(404).json({ error: `Ruta no encontrada: ${req.method} ${req.originalUrl}` });
+  res
+    .status(404)
+    .json({ error: `Ruta no encontrada: ${req.method} ${req.originalUrl}` });
 });
 
 // Error handler
@@ -57,7 +62,7 @@ app.use((err: any, req: Request, res: Response, next: any) => {
   console.error("Error:", err);
   res.status(err.status || err.statusCode || 500).json({
     error: err.message || String(err),
-    status: err.status || err.statusCode
+    status: err.status || err.statusCode,
   });
 });
 
